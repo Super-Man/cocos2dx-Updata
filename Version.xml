@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<versionList>
+	<Element Id="0" version="CH.1.1.0" URL="http://180.168.116.166:8083/cfg/chenjinjun/CH.1.1.0.zip" />
+	<Element Id="1" version="CH.1.1.2" URL="http://180.168.116.166:8083/cfg/chenjinjun/CH.1.1.2.zip" />
+	<Element Id="2" version="CH.1.1.4" URL="http://180.168.116.166:8083/cfg/chenjinjun/CH.1.1.4.zip" />
+	<Element Id="3" version="CH.1.1.5" URL="http://180.168.116.166:8083/cfg/chenjinjun/CH.1.1.5.zip" />
+	<Element Id="4" version="CH.1.2.5" URL="http://180.168.116.166:8083/cfg/chenjinjun/CH.1.2.5.zip" />
+	<Element Id="5" version="CH.2.3.1" URL="http://180.168.116.166:8083/cfg/chenjinjun/CH.2.3.1.zip " />
+</versionList>
