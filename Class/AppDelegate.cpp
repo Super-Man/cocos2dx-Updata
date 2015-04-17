@@ -1,12 +1,18 @@
 #include "AppDelegate.h"
-
+#include <Upgrade.h>
 #include <vector>
-#include <string>
-#include"Upgrade.h"
-#include "AppMacros.h"
+#include <ErrorCodeCommon.hpp>
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+	// to do ...
+#elif(CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+	// to do ...
+#else
+	#include <Windows.h>
+#endif
 
 USING_NS_CC;
-using namespace std;
+
+typedef void(*GameCreate)();
 
 AppDelegate::AppDelegate() {
 
@@ -16,72 +22,42 @@ AppDelegate::~AppDelegate()
 {
 }
 
+//if you want a different context,just modify the value of glContextAttrs
+//it will takes effect on all platforms
+void AppDelegate::initGLContextAttrs()
+{
+    //set OpenGL context attributions,now can only set six attributions:
+    //red,green,blue,alpha,depth,stencil
+    GLContextAttrs glContextAttrs = {8, 8, 8, 8, 24, 8};
+
+    GLView::setGLContextAttrs(glContextAttrs);
+}
+
 bool AppDelegate::applicationDidFinishLaunching() {
     // initialize director
     auto director = Director::getInstance();
     auto glview = director->getOpenGLView();
     if(!glview) {
-        glview = GLView::create("Cpp Empty Test");
+        glview = GLViewImpl::create("Polo");
         director->setOpenGLView(glview);
     }
 
-    director->setOpenGLView(glview);
-
-    // Set the design resolution
-#if (CC_TARGET_PLATFORM == CC_PLATFORM_WP8)
-    // a bug in DirectX 11 level9-x on the device prevents ResolutionPolicy::NO_BORDER from working correctly
-    glview->setDesignResolutionSize(designResolutionSize.width, designResolutionSize.height, ResolutionPolicy::SHOW_ALL);
-#else
-    glview->setDesignResolutionSize(designResolutionSize.width, designResolutionSize.height, ResolutionPolicy::NO_BORDER);
-#endif
-
-	Size frameSize = glview->getFrameSize();
-    
-    vector<string> searchPath;
-
-    // In this demo, we select resource according to the frame's height.
-    // If the resource size is different from design resolution size, you need to set contentScaleFactor.
-    // We use the ratio of resource's height to the height of design resolution,
-    // this can make sure that the resource's height could fit for the height of design resolution.
-
-    // if the frame's height is larger than the height of medium resource size, select large resource.
-	if (frameSize.height > mediumResource.size.height)
-	{
-        searchPath.push_back(largeResource.directory);
-
-        director->setContentScaleFactor(MIN(largeResource.size.height/designResolutionSize.height, largeResource.size.width/designResolutionSize.width));
-	}
-    // if the frame's height is larger than the height of small resource size, select medium resource.
-    else if (frameSize.height > smallResource.size.height)
-    {
-        searchPath.push_back(mediumResource.directory);
-        
-        director->setContentScaleFactor(MIN(mediumResource.size.height/designResolutionSize.height, mediumResource.size.width/designResolutionSize.width));
-    }
-    // if the frame's height is smaller than the height of medium resource size, select small resource.
-	else
-    {
-        searchPath.push_back(smallResource.directory);
-
-        director->setContentScaleFactor(MIN(smallResource.size.height/designResolutionSize.height, smallResource.size.width/designResolutionSize.width));
-    }
-    
-    // set searching path
-    FileUtils::getInstance()->setSearchPaths(searchPath);
-	
     // turn on display FPS
     director->setDisplayStats(true);
 
     // set FPS. the default value is 1.0/60 if you don't call this
     director->setAnimationInterval(1.0 / 60);
 
-    // create a scene. it's an autorelease object
-	auto scene = Scene::create();
+
+	auto sece = Scene::create();
+
+	auto layer = Upgrade::create(std::bind(&AppDelegate::up, this, std::placeholders::_1));
 	
-	auto layer = Upgrade::create();
-	scene->addChild(layer);
-    // run
-    director->runWithScene(scene);
+	sece->addChild(layer);
+	director->runWithScene(sece);
+	std::vector<std::string> searchPaths = FileUtils::getInstance()->getSearchPaths();
+
+
 
     return true;
 }
@@ -91,7 +67,7 @@ void AppDelegate::applicationDidEnterBackground() {
     Director::getInstance()->stopAnimation();
 
     // if you use SimpleAudioEngine, it must be pause
-    // SimpleAudioEngine::sharedEngine()->pauseBackgroundMusic();
+    // SimpleAudioEngine::getInstance()->pauseBackgroundMusic();
 }
 
 // this function will be called when the app is active again
@@ -99,5 +75,30 @@ void AppDelegate::applicationWillEnterForeground() {
     Director::getInstance()->startAnimation();
 
     // if you use SimpleAudioEngine, it must resume here
-    // SimpleAudioEngine::sharedEngine()->resumeBackgroundMusic();
+    // SimpleAudioEngine::getInstance()->resumeBackgroundMusic();
+}
+
+void AppDelegate::up(int m_pErrorCode)
+{
+	if (m_pErrorCode == BruCe::protocol::ErrorCode::SUCCESS)
+	{
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+		// to do ...
+#elif(CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+		// to do ...
+#else
+		std::string szLibPath = FileUtils::getInstance()->fullPathForFilename("libCore_d.dll");
+		HINSTANCE xHINSTANCE = LoadLibraryA(szLibPath.c_str());
+
+		GameCreate xGameCreate = (GameCreate)GetProcAddress(xHINSTANCE, "GameCreate");
+
+		if (nullptr == xGameCreate)
+		{
+			FreeLibrary(xHINSTANCE);
+		}
+
+		xGameCreate();
+#endif
+	}
+	
 }

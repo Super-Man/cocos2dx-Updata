@@ -1,7 +1,15 @@
+//
+//	CustomAssetsManager.h
+//
+// 下载，解压文件类
+//
+// Create By ChenJinJun on 14-12-20
+//
 
 
-#ifndef __AssetsManagerEx__
-#define __AssetsManagerEx__
+
+#ifndef __CUSTOMASSETSMANAGER__
+#define __CUSTOMASSETSMANAGER__
 
 #include <string>
 
@@ -12,14 +20,14 @@
 
 NS_CC_EXT_BEGIN
 
-class AssetsManagerDelegateProtocolEx;
+class CustomAssetsManagerDelegateProtocol;
 
 /*
  *  This class is used to auto update resources, such as pictures or scripts.
  *  The updated package should be a zip file. And there should be a file named
  *  version in the server, which contains version code.
  */
-class AssetsManagerEx : public Node
+class CustomAssetsManager : public Node
 {
 public:
     enum class ErrorCode
@@ -66,12 +74,12 @@ public:
      * @param storagePath The path to store downloaded resources.
      * @js NA
      */
-    AssetsManagerEx(const char* versionFileUrl = NULL, const char* storagePath = NULL);
+	CustomAssetsManager(const char* versionFileUrl = NULL, const char* storagePath = NULL);
     /**
      * @js NA
      * @lua NA
      */
-    virtual ~AssetsManagerEx();
+	virtual ~CustomAssetsManager();
     
     typedef std::function<void(int)> ErrorCallback;
     typedef std::function<void(int)> ProgressCallback;
@@ -79,7 +87,7 @@ public:
 
     /* @brief To access within scripting environment
      */
-    static AssetsManagerEx* create(const char* versionFileUrl, const char* storagePath, ErrorCallback errorCallback, ProgressCallback progressCallback, SuccessCallback successCallback );
+	static CustomAssetsManager* create(const char* versionFileUrl, const char* storagePath, ErrorCallback errorCallback, ProgressCallback progressCallback, SuccessCallback successCallback);
 
     /* @brief Check out if there is a new version resource.
      *        You may use this method before updating, then let user determine whether
@@ -102,13 +110,13 @@ public:
     void deleteVersion();
     
    
-    void setDelegate(AssetsManagerDelegateProtocolEx *delegate);
+	void setDelegate(CustomAssetsManagerDelegateProtocol *delegate);
     
     /**
      * @js NA
      * @lua NA
      */
-    AssetsManagerDelegateProtocolEx* getDelegate() const { return _delegate ;}
+	CustomAssetsManagerDelegateProtocol* getDelegate() const { return _delegate; }
     
     /** @brief Sets connection time out in seconds
      */
@@ -157,24 +165,24 @@ private:
 
     unsigned int _connectionTimeout;
     
-    AssetsManagerDelegateProtocolEx *_delegate; 
+	CustomAssetsManagerDelegateProtocol *_delegate;
     
     bool _isDownloading;
     bool _shouldDeleteDelegateWhenExit;
     
 };
 
-class AssetsManagerDelegateProtocolEx
+class CustomAssetsManagerDelegateProtocol
 {
 public:
-    virtual ~AssetsManagerDelegateProtocolEx(){};
+	virtual ~CustomAssetsManagerDelegateProtocol(){};
 public:
     /* @brief Call back function for error
        @param errorCode Type of error
      * @js NA
      * @lua NA
      */
-    virtual void onError(AssetsManagerEx::ErrorCode errorCode) {};
+    virtual void onError(CustomAssetsManager::ErrorCode errorCode) {};
     /** @brief Call back function for recording downloading percent
         @param percent How much percent downloaded
         @warning    This call back function just for recording downloading percent.
@@ -192,8 +200,8 @@ public:
 };
 
 // Deprecated declaration
-CC_DEPRECATED_ATTRIBUTE typedef AssetsManagerEx CCAssetsManagerEx;
-CC_DEPRECATED_ATTRIBUTE typedef AssetsManagerDelegateProtocolEx CCAssetsManagerDelegateProtocolEx;
+CC_DEPRECATED_ATTRIBUTE typedef CustomAssetsManager CustomAssetsManagerEx;
+CC_DEPRECATED_ATTRIBUTE typedef CustomAssetsManagerDelegateProtocol CustomAssetsManagerDelegateProtocol;
 
 NS_CC_EXT_END;
 

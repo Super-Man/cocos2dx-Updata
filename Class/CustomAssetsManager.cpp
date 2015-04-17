@@ -1,27 +1,12 @@
-/****************************************************************************
- Copyright (c) 2013 cocos2d-x.org
- 
- http://www.cocos2d-x.org
- 
- Permission is hereby granted, free of charge, to any person obtaining a copy
- of this software and associated documentation files (the "Software"), to deal
- in the Software without restriction, including without limitation the rights
- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- copies of the Software, and to permit persons to whom the Software is
- furnished to do so, subject to the following conditions:
- 
- The above copyright notice and this permission notice shall be included in
- all copies or substantial portions of the Software.
- 
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- THE SOFTWARE.
- ****************************************************************************/
-#include "AssetsManagerEx.h"
+//
+//	CustomAssetsManager.cpp
+//
+// 下载，解压文件类
+//
+// Create By ChenJinJun on 14-12-20
+//
+
+#include "CustomAssetsManager.hpp"
 #include "cocos2d.h"
 
 #include <curl/curl.h>
@@ -64,19 +49,19 @@ NS_CC_EXT_BEGIN;
 
 struct ErrorMessage
 {
-    AssetsManagerEx::ErrorCode code;
-    AssetsManagerEx* manager;
+	CustomAssetsManager::ErrorCode code;
+	CustomAssetsManager* manager;
 };
 
 struct ProgressMessage
 {
     int percent;
-    AssetsManagerEx* manager;
+	CustomAssetsManager* manager;
 };
 
 // Implementation of AssetsManager
 
-AssetsManagerEx::AssetsManagerEx(const char* versionFileUrl/* =nullptr */, const char* storagePath/* =nullptr */)
+CustomAssetsManager::CustomAssetsManager(const char* versionFileUrl/* =nullptr */, const char* storagePath/* =nullptr */)
 :  _storagePath(storagePath)
 , _version("")
 , _versionFileUrl(versionFileUrl)
@@ -90,7 +75,7 @@ AssetsManagerEx::AssetsManagerEx(const char* versionFileUrl/* =nullptr */, const
     checkStoragePath();
 }
 
-AssetsManagerEx::~AssetsManagerEx()
+CustomAssetsManager::~CustomAssetsManager()
 {
     if (_shouldDeleteDelegateWhenExit)
     {
@@ -98,7 +83,7 @@ AssetsManagerEx::~AssetsManagerEx()
     }
 }
 
-void AssetsManagerEx::checkStoragePath()
+void CustomAssetsManager::checkStoragePath()
 {
     if (_storagePath.size() > 0 && _storagePath[_storagePath.size() - 1] != '/')
     {
@@ -115,7 +100,7 @@ static size_t getVersionCode(void *ptr, size_t size, size_t nmemb, void *userdat
     return (size * nmemb);
 }
 
-bool AssetsManagerEx::checkUpdate()
+bool CustomAssetsManager::checkUpdate()
 {
     if (_versionFileUrl.size() == 0) return false;
     
@@ -151,37 +136,13 @@ bool AssetsManagerEx::checkUpdate()
         curl_easy_cleanup(_curl);
         return false;
     }
-    //string recordedVersion = UserDefault::getInstance()->getStringForKey("localVersion");
-
-	/*
-		now  test , _versionUrl.push_back(UpdateItem(" "  ,"  "," " ));
-	
-	*/
-
-	//_versionUrls.push_back(UpdateItem("CH.1.1.2", "http://180.168.116.166:8083/cfg/chenjinjun/", ".zip"));
-	//_versionUrls.push_back(UpdateItem("CH.1.1.4", "http://180.168.116.166:8083/cfg/chenjinjun/", ".zip"));
-	//
-
-
-
-
-// 	if (_versionUrls.size() <= 0)
-//     {
-//         Director::getInstance()->getScheduler()->performFunctionInCocosThread([&, this]{
-//             if (this->_delegate)
-//                 this->_delegate->onError(ErrorCode::NO_NEW_VERSION);
-//         });
-//         CCLOG("there is not new version");
-//        
-//         return false;
-//     }
-//     
+ 
     CCLOG("there is a new version: %s", _version.c_str());
     
     return true;
 }
 
-void AssetsManagerEx::downloadAndUncompress()
+void CustomAssetsManager::downloadAndUncompress()
 {
 	do
 		{
@@ -243,7 +204,7 @@ void AssetsManagerEx::downloadAndUncompress()
     _isDownloading = false;
 }
 
-void AssetsManagerEx::update()
+void CustomAssetsManager::update()
 {
     if (_isDownloading) return;
     
@@ -264,11 +225,11 @@ void AssetsManagerEx::update()
         return;
     }
     
-	auto t = std::thread(&AssetsManagerEx::downloadAndUncompress, this);
+	auto t = std::thread(&CustomAssetsManager::downloadAndUncompress, this);
     t.detach();
 }
 
-bool AssetsManagerEx::uncompress()
+bool CustomAssetsManager::uncompress()
 {
     // Open the zip file
     string outFileName = _storagePath + TEMP_PACKAGE_FILE_NAME;
@@ -437,7 +398,7 @@ bool AssetsManagerEx::uncompress()
 /*
  * Create a direcotry is platform depended.
  */
-bool AssetsManagerEx::createDirectory(const char *path)
+bool CustomAssetsManager::createDirectory(const char *path)
 {
 #if (CC_TARGET_PLATFORM != CC_PLATFORM_WIN32)
     mode_t processMask = umask(0);
@@ -459,7 +420,7 @@ bool AssetsManagerEx::createDirectory(const char *path)
 #endif
 }
 
-void AssetsManagerEx::setSearchPath()
+void CustomAssetsManager::setSearchPath()
 {
     vector<string> searchPaths = FileUtils::getInstance()->getSearchPaths();
     vector<string>::iterator iter = searchPaths.begin();
@@ -483,7 +444,7 @@ int assetsManagerProgressFunc(void *ptr, double totalToDownload, double nowDownl
     {
         percent = tmp;
         Director::getInstance()->getScheduler()->performFunctionInCocosThread([=]{
-			auto manager = static_cast<AssetsManagerEx*>(ptr);
+			auto manager = static_cast<CustomAssetsManager*>(ptr);
             if (manager->_delegate)
                 manager->_delegate->onProgress(percent);
         });
@@ -494,7 +455,7 @@ int assetsManagerProgressFunc(void *ptr, double totalToDownload, double nowDownl
     return 0;
 }
 
-bool AssetsManagerEx::downLoad()
+bool CustomAssetsManager::downLoad()
 {
     // Create a file to save package.
     const string outFileName = _storagePath + TEMP_PACKAGE_FILE_NAME;
@@ -543,41 +504,41 @@ bool AssetsManagerEx::downLoad()
 }
 
 
-string AssetsManagerEx::getVersion()
+string CustomAssetsManager::getVersion()
 {
     return UserDefault::getInstance()->getStringForKey("localVersion");
 }
 
-void AssetsManagerEx::deleteVersion()
+void CustomAssetsManager::deleteVersion()
 {
     UserDefault::getInstance()->setStringForKey("localVersion", "");
 }
 
-void AssetsManagerEx::setDelegate(AssetsManagerDelegateProtocolEx *delegate)
+void CustomAssetsManager::setDelegate(CustomAssetsManagerDelegateProtocol *delegate)
 {
     _delegate = delegate;
 }
 
-void AssetsManagerEx::setConnectionTimeout(unsigned int timeout)
+void CustomAssetsManager::setConnectionTimeout(unsigned int timeout)
 {
     _connectionTimeout = timeout;
 }
 
-unsigned int AssetsManagerEx::getConnectionTimeout()
+unsigned int CustomAssetsManager::getConnectionTimeout()
 {
     return _connectionTimeout;
 }
 
-AssetsManagerEx* AssetsManagerEx::create( const char* versionFileUrl, const char* storagePath, ErrorCallback errorCallback, ProgressCallback progressCallback, SuccessCallback successCallback)
+CustomAssetsManager* CustomAssetsManager::create(const char* versionFileUrl, const char* storagePath, ErrorCallback errorCallback, ProgressCallback progressCallback, SuccessCallback successCallback)
 {
-    class DelegateProtocolImpl : public AssetsManagerDelegateProtocolEx 
+	class DelegateProtocolImpl : public CustomAssetsManagerDelegateProtocol
     {
     public :
         DelegateProtocolImpl(ErrorCallback aErrorCallback, ProgressCallback aProgressCallback, SuccessCallback aSuccessCallback)
         : errorCallback(aErrorCallback), progressCallback(aProgressCallback), successCallback(aSuccessCallback)
         {}
 
-		virtual void onError(AssetsManagerEx::ErrorCode errorCode) { errorCallback(int(errorCode)); }
+		virtual void onError(CustomAssetsManager::ErrorCode errorCode) { errorCallback(int(errorCode)); }
         virtual void onProgress(int percent) { progressCallback(percent); }
         virtual void onSuccess() { successCallback(); }
 
@@ -587,7 +548,7 @@ AssetsManagerEx* AssetsManagerEx::create( const char* versionFileUrl, const char
         SuccessCallback successCallback;
     };
 
-	auto* manager = new AssetsManagerEx(versionFileUrl, storagePath);
+	auto* manager = new CustomAssetsManager(versionFileUrl, storagePath);
     auto* delegate = new DelegateProtocolImpl(errorCallback,progressCallback,successCallback);
     manager->setDelegate(delegate);
     manager->_shouldDeleteDelegateWhenExit = true;
@@ -595,7 +556,7 @@ AssetsManagerEx* AssetsManagerEx::create( const char* versionFileUrl, const char
     return manager;
 }
 
-void AssetsManagerEx::createStoragePath()
+void CustomAssetsManager::createStoragePath()
 {
     // Remove downloaded files
 #if (CC_TARGET_PLATFORM != CC_PLATFORM_WIN32)
@@ -614,7 +575,7 @@ void AssetsManagerEx::createStoragePath()
 #endif
 }
 
-void AssetsManagerEx::destroyStoragePath()
+void CustomAssetsManager::destroyStoragePath()
 {
     // Delete recorded version codes.
     deleteVersion();

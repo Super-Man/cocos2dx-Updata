@@ -1,11 +1,17 @@
-﻿#include "Upgrade.h"
-#include "HelloWorldScene.h"
+﻿//  Upgrade.cpp
+//
+// 更新类
+//
+//  Created by ChenJinJun on 14-12-20.
+//
 
 
+
+#include "Upgrade.h"
 #include "curl/curl.h"
 #include <curl/easy.h>
 #include <tinyxml2/tinyxml2.h>
-
+#include <ErrorCodeCommon.hpp>
 
 
 #if (CC_TARGET_PLATFORM != CC_PLATFORM_WIN32)
@@ -34,6 +40,30 @@ Upgrade::~Upgrade()
 	
 }
 
+Upgrade* Upgrade::create(UpgradeCallback pUpgradeCallback)
+{
+	if (nullptr == pUpgradeCallback)
+	{
+		return nullptr;
+	}
+	
+	Upgrade* _new = new Upgrade();
+	if (_new && _new->init())
+	{
+		_new->setUpgradeCallback(pUpgradeCallback);
+
+		
+
+		_new->autorelease();
+		return _new;
+	}
+	CC_SAFE_DELETE(_new);
+	return nullptr;
+
+
+}
+
+
 bool Upgrade::init()
 {
 	if (!CCLayer::init())
@@ -55,15 +85,14 @@ bool Upgrade::init()
 	//获取URL上的版本队列
 	if (!getVersionInfo())
 	{
-		CCLOG("no new version =====");
 		return false;
 	}
 
 	//创建下载目录文件夹
-	initDownloadDir(); 
+	initDownloadDir();
 
 	//加载tips 提示信息
-	loadTipsInfo();	
+	loadTipsInfo();
 	
 
 	LoadingBar *pLoadingBar = LoadingBar::create("load.png");
@@ -73,12 +102,17 @@ bool Upgrade::init()
 	this->addChild(pLoadingBar);
 
 
-	_showDownloadInfo = Label::createWithSystemFont("", "Arial", 20);
+	_showDownloadInfo = Label::create();
+	_showDownloadInfo->setString("");
+	_showDownloadInfo->setSystemFontSize(20);
+
 	this->addChild(_showDownloadInfo);
 	_showDownloadInfo->setPosition(Vec2(winSize.width / 2, winSize.height / 2 - 20));
 
 	//提示label
-	tipsLabel = Label::create(TipsVer[0], "Arail", 20);
+	tipsLabel = Label::create();
+	tipsLabel->setString(TipsVer[0]);
+	tipsLabel->setSystemFontSize(20);
 	tipsLabel->setTag(1002);
 	tipsLabel->setPosition(Vec2(winSize.width / 2, winSize.height / 2+20));
 	this->addChild(tipsLabel);
@@ -96,32 +130,34 @@ bool Upgrade::init()
 	tipsLabel->runAction(repeatForever);
 
 
-	auto itemLabel2 = MenuItemLabel::create(
-		Label::createWithSystemFont("Upgrade", "Arail", 20), CC_CALLBACK_1(Upgrade::upgrade, this));
-
-	auto menu = Menu::create(itemLabel2, NULL);
-	this->addChild(menu);
-
-	itemLabel2->setPosition(Vec2(winSize.width / 2, winSize.height / 2 ));
-
-	menu->setPosition(Vec2::ZERO);
+	
+	upgrade();
+	
+	
 
 	return true;
 }
 
-void Upgrade::onError(AssetsManagerEx::ErrorCode errorCode)
+void Upgrade::onError(CustomAssetsManager::ErrorCode errorCode)
 {
-	if (errorCode == AssetsManagerEx::ErrorCode::NO_NEW_VERSION)
+	if (errorCode == CustomAssetsManager::ErrorCode::UNCOMPRESS)
 	{
 		_showDownloadInfo->setString("no new version");
+
+		m_pUpgradeCallback(BruCe::protocol::ErrorCode::RESULT_FAILD_UNCOMPRESS);
 	}
-	else if (errorCode == AssetsManagerEx::ErrorCode::NETWORK)
+	else if (errorCode == CustomAssetsManager::ErrorCode::NETWORK)
 	{
 		_showDownloadInfo->setString("network error");
+		m_pUpgradeCallback(BruCe::protocol::ErrorCode::RESULT_FAILD_NETWORK);
 	}
-	else if (errorCode == AssetsManagerEx::ErrorCode::CREATE_FILE)
+	else if (errorCode == CustomAssetsManager::ErrorCode::CREATE_FILE)
 	{
 		_showDownloadInfo->setString("create file error");
+	}
+	else if (errorCode == CustomAssetsManager::ErrorCode::UNDOWNED)
+	{
+		m_pUpgradeCallback(BruCe::protocol::ErrorCode::RESULT_FAILD_UNDOWNED);
 	}
 }
 
@@ -148,19 +184,15 @@ void Upgrade::onSuccess()
 	VersionVer.erase(VersionVer.begin());
 	if (VersionVer.size()!=0)
 	{
-		assetManager = new AssetsManagerEx(VersionVer.begin()->zipUrl.c_str(), _pathToSave.c_str());
+		assetManager = new CustomAssetsManager(VersionVer.begin()->zipUrl.c_str(), _pathToSave.c_str());
 		assetManager->setDelegate(this);
 		assetManager->setConnectionTimeout(3);
 		assetManager->update();
 	}
 	else
 	{
-		std::vector<std::string>searchPath;
-		searchPath.push_back(_pathToSave);
-		FileUtils::getInstance()->setSearchPaths(searchPath);
-
-		auto scene = HelloWorld::scene();
-		Director::getInstance()->replaceScene(scene);
+		m_pUpgradeCallback(BruCe::protocol::ErrorCode::SUCCESS);
+		
 	}
 	
 }
@@ -186,49 +218,34 @@ CCLOG("Path: %s", _pathToSave.c_str());
 	}
 #endif
 	CCLOG("initDownloadDir end");
+
+
+	vector<string> searchPaths = FileUtils::getInstance()->getSearchPaths();
+	vector<string>::iterator iter = searchPaths.begin();
+	searchPaths.insert(iter, _pathToSave);
+	FileUtils::getInstance()->setSearchPaths(searchPaths);
 }
 
-// void Upgrade::reset(Ref* pSender)
-// {
-// 	_showDownloadInfo->setString("");
-// 	// Remove downloaded files
-// #if (CC_TARGET_PLATFORM != CC_PLATFORM_WIN32)
-// 	string command = "rm -r ";
-// 	// Path may include space.
-// 	command += "\"" + _pathToSave + "\"";
-// 	system(command.c_str());
-// #else
-// 	std::string command = "rd /s /q ";
-// 	// Path may include space.
-// 	command += "\"" + _pathToSave + "\"";
-// 	system(command.c_str());
-// #endif
-// 	initDownloadDir();
-// }
 
-void Upgrade::upgrade(Ref* pSender)
+void Upgrade::upgrade()
 {
 	
 	
 	_showDownloadInfo->setString("");
 
-// 	vector<VersionInf>::iterator ite = VersionVer.begin();
-// 	for (; ite != VersionVer.end(); ++ite)
-// 	{	
+
 	if (VersionVer.size()<=0)
 	{
 		CCLOG("no new version ");
 	}
 	else
 	{
-		assetManager = new AssetsManagerEx(VersionVer.begin()->zipUrl.c_str(), _pathToSave.c_str());
+		assetManager = new CustomAssetsManager(VersionVer.begin()->zipUrl.c_str(), _pathToSave.c_str());
 		assetManager->setDelegate(this);
 		assetManager->setConnectionTimeout(3);
 		assetManager->update();
 	}
 		
-	//}
-
 }
 
 bool Upgrade::getVersionInfo()
@@ -327,3 +344,5 @@ void Upgrade::actionCallBacn()
 	tipsLabel->setString(TipsVer[tipsCur]);
 
 }
+
+
