@@ -321,7 +321,11 @@ void Upgrade::loadTipsInfo()
 	{
 		return;
 	}
-	doc->LoadFile("tips.xml");
+	std::string sFilePath = FileUtils::getInstance()->fullPathForFilename("tips.xml");
+
+	auto data = FileUtils::getInstance()->getDataFromFile(sFilePath.c_str());
+
+	doc->Parse((char*)data.getBytes(), data.getSize());
 	tinyxml2::XMLElement* pElement = doc->RootElement()->FirstChildElement();
 	while (pElement)
 	{

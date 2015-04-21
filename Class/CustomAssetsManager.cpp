@@ -91,15 +91,6 @@ void CustomAssetsManager::checkStoragePath()
     }
 }
 
-
-static size_t getVersionCode(void *ptr, size_t size, size_t nmemb, void *userdata)
-{
-    string *version = (string*)userdata;
-    version->append((char*)ptr, size * nmemb);
-    
-    return (size * nmemb);
-}
-
 bool CustomAssetsManager::checkUpdate()
 {
     if (_versionFileUrl.size() == 0) return false;
@@ -117,8 +108,6 @@ bool CustomAssetsManager::checkUpdate()
     CURLcode res;
     curl_easy_setopt(_curl, CURLOPT_URL, _versionFileUrl.c_str());
     curl_easy_setopt(_curl, CURLOPT_SSL_VERIFYPEER, 0L);
-    curl_easy_setopt(_curl, CURLOPT_WRITEFUNCTION, getVersionCode);
-   // curl_easy_setopt(_curl, CURLOPT_WRITEDATA, &_version);
     if (_connectionTimeout) curl_easy_setopt(_curl, CURLOPT_CONNECTTIMEOUT, _connectionTimeout);
     curl_easy_setopt(_curl, CURLOPT_NOSIGNAL, 1L);
     curl_easy_setopt(_curl, CURLOPT_LOW_SPEED_LIMIT, LOW_SPEED_LIMIT);
