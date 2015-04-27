@@ -35,7 +35,6 @@ public:
     */
     virtual void applicationWillEnterForeground();
 
-
 	void up(int m_pErrorCode);
 };
 

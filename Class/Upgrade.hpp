@@ -14,8 +14,7 @@
 #include <extensions/cocos-ext.h>
 #include <CustomAssetsManager.hpp>
 #include <ui/CocosGUI.h>
-#include <vector>
-
+#include <VersionVector.hpp>
 
 USING_NS_CC;
 USING_NS_CC_EXT;
@@ -29,15 +28,6 @@ class Upgrade :
 {
 public:
 
-	struct VersionInf
-	{
-		int id;
-		std::string version;
-		std::string zipUrl;
-	};
-
-	std::vector<VersionInf> VersionVer;
-
 	std::vector<std::string> TipsVer;
 	Upgrade();
 	
@@ -45,12 +35,10 @@ public:
 
 	bool init();
 	
-	/**************************
-		创建更新类实例
-		参数说明: 
-		pUpgradeCallback  更新结果回掉函数
-	***************************/
-	static Upgrade* create(UpgradeCallback pUpgradeCallback);
+	
+	//	pUpgradeCallback  更新结果回掉函数
+	
+	static Upgrade* create(UpgradeCallback pUpgradeCallback, VersionVer versionVe);
 	
 
 	void upgrade();	//检查版本更新
@@ -64,7 +52,6 @@ private:
 	void initDownloadDir();		//创建下载目录
 
 	bool getVersionInfo();		//获取版本信息
-	//CC_SYNTHESIZE(std::vector,)
 	
 	static size_t downLoadPackaged(void *ptr, size_t size, size_t nmemb, void *userdata); //存到vector里
 
@@ -76,10 +63,10 @@ private:
 	cocos2d::Label *_showDownloadInfo;
 	CustomAssetsManager *assetManager;
 	cocos2d::Label *tipsLabel;
-	int nowVersionId;
 	int tipsCur;
-	std::string localVersionStr;
 
+	VersionVer m_VersionVer;
+	
 	CC_SYNTHESIZE(UpgradeCallback, m_pUpgradeCallback, UpgradeCallback)
 };
 

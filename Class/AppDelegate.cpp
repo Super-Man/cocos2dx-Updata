@@ -2,6 +2,8 @@
 #include <Upgrade.h>
 #include <vector>
 #include <ErrorCodeCommon.hpp>
+#include "HelloWorldScene.h"
+#include <GetVersion.hpp>
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
 	// to do ...
 #elif(CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
@@ -48,15 +50,37 @@ bool AppDelegate::applicationDidFinishLaunching() {
     // set FPS. the default value is 1.0/60 if you don't call this
     director->setAnimationInterval(1.0 / 60);
 
+	std::string _pathToSave = CCFileUtils::getInstance()->getWritablePath();
+	_pathToSave += "download";
 
-	auto sece = Scene::create();
+	vector<string> searchPaths = FileUtils::getInstance()->getSearchPaths();
+	vector<string>::iterator iter = searchPaths.begin();
+	searchPaths.insert(iter, _pathToSave);
+	FileUtils::getInstance()->setSearchPaths(searchPaths);
 
-	auto layer = Upgrade::create(std::bind(&AppDelegate::up, this, std::placeholders::_1));
+	std::string s = UserDefault::getInstance()->getStringForKey("localVersion");
+	GetVersionInfo* m_pInfo = new GetVersionInfo(s);
+
+	if (m_pInfo->getVersionVer().size() != 0)
+	{
+		auto sece = Scene::create();
+
+		auto layer = Upgrade::create(std::bind(&AppDelegate::up, this, std::placeholders::_1), m_pInfo->getVersionVer());
+
+		sece->addChild(layer);
+		director->runWithScene(sece);
+		
+	}
+	else
+	{
+		auto scene = HelloWorld::createScene();
+		director->runWithScene(scene);
+
+	}
 	
-	sece->addChild(layer);
-	director->runWithScene(sece);
-	std::vector<std::string> searchPaths = FileUtils::getInstance()->getSearchPaths();
 
+//	std::vector<std::string> searchPaths = FileUtils::getInstance()->getSearchPaths();
+//	CCLog("fuck  run  this ");
 
 
     return true;
@@ -80,25 +104,32 @@ void AppDelegate::applicationWillEnterForeground() {
 
 void AppDelegate::up(int m_pErrorCode)
 {
-	if (m_pErrorCode == BruCe::protocol::ErrorCode::SUCCESS)
-	{
-#if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
-		// to do ...
-#elif(CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
-		// to do ...
-#else
-		std::string szLibPath = FileUtils::getInstance()->fullPathForFilename("libCore_d.dll");
-		HINSTANCE xHINSTANCE = LoadLibraryA(szLibPath.c_str());
 
-		GameCreate xGameCreate = (GameCreate)GetProcAddress(xHINSTANCE, "GameCreate");
+	auto scene = HelloWorld::createScene();
 
-		if (nullptr == xGameCreate)
-		{
-			FreeLibrary(xHINSTANCE);
-		}
+	Director::getInstance()->replaceScene(scene);
+// 	if (m_pErrorCode == BruCe::protocol::ErrorCode::SUCCESS)
+// 	{
+// #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+// 		// to do ...
+// #elif(CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+// 		// to do ...
+// 		CCLog("%s:%d", __FILE__, __LINE__);
+// #else
+// 		std::string szLibPath = FileUtils::getInstance()->fullPathForFilename("libCore_d.dll");
+// 		HINSTANCE xHINSTANCE = LoadLibraryA(szLibPath.c_str());
+// 
+// 		GameCreate xGameCreate = (GameCreate)GetProcAddress(xHINSTANCE, "GameCreate");
+// 
+// 		if (nullptr == xGameCreate)
+// 		{
+// 			FreeLibrary(xHINSTANCE);
+// 		}
+// 
+// 		xGameCreate();
+// #endif
 
-		xGameCreate();
-#endif
-	}
-	
+// 
+// 	}
+
 }

@@ -91,6 +91,15 @@ void CustomAssetsManager::checkStoragePath()
     }
 }
 
+
+static size_t getVersionCode(void *ptr, size_t size, size_t nmemb, void *userdata)
+{
+    string *version = (string*)userdata;
+    version->append((char*)ptr, size * nmemb);
+    
+    return (size * nmemb);
+}
+
 bool CustomAssetsManager::checkUpdate()
 {
     if (_versionFileUrl.size() == 0) return false;
@@ -104,7 +113,6 @@ bool CustomAssetsManager::checkUpdate()
     
     // Clear _version before assign new value.
     _version.clear();
-    
     CURLcode res;
     curl_easy_setopt(_curl, CURLOPT_URL, _versionFileUrl.c_str());
     curl_easy_setopt(_curl, CURLOPT_SSL_VERIFYPEER, 0L);
@@ -113,7 +121,7 @@ bool CustomAssetsManager::checkUpdate()
     curl_easy_setopt(_curl, CURLOPT_LOW_SPEED_LIMIT, LOW_SPEED_LIMIT);
     curl_easy_setopt(_curl, CURLOPT_LOW_SPEED_TIME, LOW_SPEED_TIME);
     res = curl_easy_perform(_curl);
-    
+
 	curl_easy_cleanup(_curl);
     if (res != 0)
     {
@@ -125,9 +133,6 @@ bool CustomAssetsManager::checkUpdate()
         curl_easy_cleanup(_curl);
         return false;
     }
- 
-    CCLOG("there is a new version: %s", _version.c_str());
-    
     return true;
 }
 
@@ -208,11 +213,11 @@ void CustomAssetsManager::update()
         return;
     }   
     // Check if there is a new version.
-    if (! checkUpdate())
-    {
-        _isDownloading = false;
-        return;
-    }
+//     if (! checkUpdate())
+//     {
+//         _isDownloading = false;
+//         return;
+//     }
     
 	auto t = std::thread(&CustomAssetsManager::downloadAndUncompress, this);
     t.detach();
